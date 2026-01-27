@@ -28,7 +28,7 @@
 
 ## 📂 Project Architecture
 
-text
+```text
 ├── app.py                 # Core application logic & UI
 ├── Cleaned_Data.csv       # Default sample dataset
 ├── requirements.txt       # Environment dependencies
