@@ -1,4 +1,3 @@
-```markdown
 # 📈 AdsVision: Advanced Social Media Campaign Analytics
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
@@ -29,13 +28,13 @@
 
 ## 📂 Project Architecture
 
-```text
+text
 ├── app.py                 # Core application logic & UI
 ├── Cleaned_Data.csv       # Default sample dataset
 ├── requirements.txt       # Environment dependencies
 └── README.md              # Project documentation
 
-```
+
 
 ---
 
