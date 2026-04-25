@@ -162,7 +162,6 @@ if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
 def process_data(df):
-    """Process uploaded data"""
     try:
         required_columns = ['Start_Date', 'End_Date', 'Revenue', 'Budget_Spent', 'ROI', 'CPA', 'Conversions']
         missing_columns = [col for col in required_columns if col not in df.columns]
@@ -203,8 +202,8 @@ def process_data(df):
 @st.cache_data
 def load_default_data():
     try:
-        if os.path.exists('Cleaned_Social_Media_Advertising.csv'):
-            df = pd.read_csv('Cleaned_Social_Media_Advertising.csv')
+        if os.path.exists('D:\\mariam\\Grad Pro\\Work\\grad\\new data\\Cleaned_Social_Media_Advertising.csv'):
+            df = pd.read_csv('D:\\mariam\\Grad Pro\\Work\\grad\\new data\\Cleaned_Social_Media_Advertising.csv')
             return process_data(df)
         else:
             return None
@@ -213,7 +212,6 @@ def load_default_data():
         return None
 
 def format_large_number(num):
-    """Format large numbers with K, M, B suffixes"""
     if pd.isna(num) or num == 0:
         return "0"
 
@@ -232,7 +230,7 @@ def format_large_number(num):
         return f"${num:.2f}"
 
 def format_large_number_no_symbol(num):
-    """Format large numbers with K, M, B suffixes without $ symbol"""
+
     if pd.isna(num) or num == 0:
         return "0"
 
@@ -250,7 +248,7 @@ def format_large_number_no_symbol(num):
     else:
         return f"{num:.2f}"
 
-# Sidebar
+
 st.sidebar.markdown("""
 <style>
     .sidebar .sidebar-content {
@@ -260,10 +258,13 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.header("🎛️ Navigation")
+
 col_nav1, col_nav2 = st.sidebar.columns(2)
+
 with col_nav1:
     if st.button("📊 Dashboard", use_container_width=True):
         st.session_state.page = 'dashboard'
+
 with col_nav2:
     if st.button("📋 Generate Report", use_container_width=True):
         st.session_state.page = 'report'
@@ -351,6 +352,7 @@ all_companies = ['All'] + sorted(df['Company_Name'].dropna().unique().tolist()) 
 all_statuses = ['All'] + sorted(df['status'].dropna().unique().tolist()) if 'status' in df.columns else ['All']
 
 selected_company = st.sidebar.multiselect('Select Company', all_companies, default=['All'])
+
 selected_campaign = st.sidebar.selectbox('Select Campaign', all_campaigns)
 
 df['Start_Date'] = pd.to_datetime(df['Start_Date'], errors='coerce')
@@ -626,7 +628,7 @@ def generate_comprehensive_report(df):
 
     return report
 
-# Dashboard Page
+
 if st.session_state.page == 'dashboard':
     st.markdown('<h1 class="main-header">📊 Social Media Campaign Performance Dashboard</h1>', unsafe_allow_html=True)
 
@@ -998,30 +1000,38 @@ if st.session_state.page == 'dashboard':
 
             language_stats = language_stats.rename(columns={'Campaign_Name': 'Campaign_Count'})
 
-            fig_language_treemap = px.treemap(
+            language_stats = language_stats.sort_values('Campaign_Count', ascending=False)
+
+            fig_language_bar = px.bar(
                 language_stats,
-                path=['Language'],
-                values='Campaign_Count',
+                x='Language',
+                y='Campaign_Count',
+                title='🗣️ Language Distribution - Campaign Count',
                 color='Revenue',
                 color_continuous_scale='RdYlGn',
-                title='🗣️ Language Distribution',
-                hover_data=['Campaign_Count', 'Revenue', 'ROI']
+                text='Campaign_Count',
+                hover_data=['Revenue', 'ROI']
             )
 
-            fig_language_treemap.update_layout(
+            fig_language_bar.update_layout(
                 template='plotly_dark',
                 height=400,
                 plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)'
+                paper_bgcolor='rgba(0,0,0,0)',
+                xaxis_title="Language",
+                yaxis_title="Number of Campaigns",
+                showlegend=False
             )
 
-            fig_language_treemap.update_traces(
-                texttemplate="<b>%{label}</b><br>%{value} campaigns",
-                textposition="middle center",
-                hovertemplate="<b>%{label}</b><br>Campaigns: %{customdata[0]}<br>Revenue: $%{customdata[1]:,.0f}<br>ROI: %{customdata[2]:.2f}x"
+            fig_language_bar.update_traces(
+                texttemplate='%{text}',
+                textposition='outside',
+                hovertemplate="<b>%{x}</b><br>Campaigns: %{y}<br>Revenue: $%{customdata[0]:,.0f}<br>ROI: %{customdata[1]:.2f}x"
             )
 
-            st.plotly_chart(fig_language_treemap, use_container_width=True)
+            fig_language_bar.update_xaxes(tickangle=45)
+
+            st.plotly_chart(fig_language_bar, use_container_width=True)
         else:
             st.info("Language data not available.")
 
@@ -1231,37 +1241,65 @@ if st.session_state.page == 'dashboard':
             else:
                 st.info("Objective data not available for this dataset.")
 
-        with geo_tab5:
-            if 'Language' in filtered_df.columns:
-                language_by_location = filtered_df.groupby(['Location', 'Language']).agg({
-                    'Revenue': 'sum',
-                    'ROI': 'mean',
-                    'Conversion_Rate': 'mean' if 'Conversion_Rate' in filtered_df.columns else 'ROI',
-                    'Campaign_Name': 'count'
-                }).reset_index()
+    with geo_tab5:
+        if 'Language' in filtered_df.columns:
+            language_by_location = filtered_df.groupby(['Location', 'Language']).agg({
+                'Revenue': 'sum',
+                'ROI': 'mean',
+                'Campaign_Name': 'count'
+            }).reset_index()
 
-                language_by_location = language_by_location.rename(columns={'Campaign_Name': 'Campaign_Count'})
+            language_by_location = language_by_location.rename(columns={'Campaign_Name': 'Campaign_Count'})
 
-                fig_language_map = px.sunburst(
-                    language_by_location,
-                    path=['Location', 'Language'],
-                    values='Revenue',
-                    color='ROI',
-                    color_continuous_scale='RdYlGn',
-                    title='🗣️ Language Distribution & Performance by Location',
-                    hover_data=['Conversion_Rate' if 'Conversion_Rate' in filtered_df.columns else 'ROI', 'Campaign_Count']
+            fig_language_bubble = px.scatter(
+                language_by_location,
+                x='Location',
+                y='Revenue',
+                size='Campaign_Count',
+                color='ROI',
+                hover_name='Language',
+                title='🗣️ Languages: Performance by Location',
+                labels={
+                    'Location': 'Location',
+                    'Revenue': 'Revenue ($)',
+                    'Campaign_Count': 'Number of Campaigns',
+                    'ROI': 'ROI (x)'
+                },
+                color_continuous_scale='RdYlGn',
+                size_max=40,
+                hover_data=['Campaign_Count', 'ROI']
+            )
+
+            fig_language_bubble.update_traces(
+                marker=dict(
+                    line=dict(width=1, color='DarkSlateGrey'),
+                    opacity=0.8
+                ),
+                hovertemplate="<b>%{hovertext}</b><br>" +
+                              "Location: %{x}<br>" +
+                              "Revenue: $%{y:,.0f}<br>" +
+                              "Campaigns: %{customdata[0]}<br>" +
+                              "ROI: %{customdata[1]:.2f}x"
+            )
+
+            fig_language_bubble.update_layout(
+                template='plotly_dark',
+                xaxis_title='Location',
+                yaxis_title='Revenue ($)',
+                yaxis=dict(tickformat='$,.0f'),
+                height=500,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                xaxis_tickangle=-45,
+                coloraxis_colorbar=dict(
+                    title="ROI",
+                    tickformat=".2f"
                 )
+            )
 
-                fig_language_map.update_layout(
-                    template='plotly_dark',
-                    height=500,
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)'
-                )
-
-                st.plotly_chart(fig_language_map, use_container_width=True)
-            else:
-                st.info("Language data not available for this dataset.")
+            st.plotly_chart(fig_language_bubble, use_container_width=True)
+        else:
+            st.info("Language data not available for this dataset.")
 
     if 'Age_Group' in filtered_df.columns or 'Gender' in filtered_df.columns or 'interest' in filtered_df.columns:
         st.markdown('<h2 class="sub-header" style="color: #ff6b6b;">👥 Demographic Performance</h2>', unsafe_allow_html=True)
